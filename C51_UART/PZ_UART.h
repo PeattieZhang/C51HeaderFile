@@ -1,16 +1,23 @@
 /************************************************************************************/
-/*																PZ_UART.h	Ver1.0																	*/
+/*																PZ_UART.h	Ver1.1																	*/
 /*					------------------------------------------------------------------			*/
-/*									é€‚ç”¨äºŽ51å•ç‰‡æœºçš„UARTå¤´å‡½æ•°																			*/
-/*									ç”¨äºŽé€šè¿‡UARTå‘é€ã€æŽ¥æ”¶æ•°æ®																			*/
-/*									å†…ç½®32å­—èŠ‚FIFOï¼ŒFIFOå­—èŠ‚æ•°å¯é€šè¿‡FIFO_SIZEæ”¹å˜										*/
-/*									æ³¢ç‰¹çŽ‡é»˜è®¤9600kbpsï¼Œå¯é€šè¿‡BAUD_RATEæ”¹å˜													*/
+/*									ÊÊÓÃÓÚ51µ¥Æ¬»úµÄUARTÍ·º¯Êý																			*/
+/*									ÓÃÓÚÍ¨¹ýUART·¢ËÍ¡¢½ÓÊÕÊý¾Ý																			*/
+/*									ÄÚÖÃ32×Ö½ÚFIFO£¬FIFO×Ö½ÚÊý¿ÉÍ¨¹ýFIFO_SIZE¸Ä±ä										*/
+/*									²¨ÌØÂÊÄ¬ÈÏ9600kbps£¬¿ÉÍ¨¹ýBAUD_RATE¸Ä±ä													*/
 /*					------------------------------------------------------------------			*/
-/*							é»˜è®¤æƒ…å†µä¸‹FIFO_SIZEä¸Šé™è¾ƒå°ï¼Œè‹¥è¿‡å¤§åˆ™ä¼šæŠ¥é”™"SEGMENT TOO LARGE"ã€‚		*/
-/*					è§£å†³åŠžæ³•ï¼šè¿›å…¥"Options for Target/Target"ï¼Œé€šè¿‡æ”¹å˜"Memory Model"å¯			*/
-/*					ä»¥æ”¹å˜FIFO_SIZEä¸Šé™ã€‚																										*/
-/*																														â€”â€”â€”â€”Peattie Zhang			*/
+/*							Ä¬ÈÏÇé¿öÏÂFIFO_SIZEÉÏÏÞ½ÏÐ¡£¬Èô¹ý´óÔò»á±¨´í"SEGMENT TOO LARGE"¡£		*/
+/*					½â¾ö°ì·¨£º½øÈë"Options for Target/Target"£¬Í¨¹ý¸Ä±ä"Memory Model"¿É			*/
+/*					ÒÔ¸Ä±äFIFO_SIZEÉÏÏÞ¡£																										*/
+/*																														¡ª¡ª¡ª¡ªPeattie Zhang			*/
 /*																																	 2020/03/03			*/
+/*					------------------------------------------------------------------			*/
+/*					Ver1.1¸üÐÂ(2020/03/04)£º																								*/
+/*							1.PZ_UART_GetReceived()ÖÐµ±DataLength = 0Ê±¶ÁÈ¡ËùÓÐÊý¾Ý£»						*/
+/*							2.È¡ÏûÔ­PZ_UART_Send()ÖÐÈôFIFOÂúÔò²»½«Êý¾ÝÐ´ÈëµÄÂß¼­£¬¸ÄÎªÈôFIFO		*/
+/*							ÂúÔòµÈ´ýFIFOÓÐ¿ÕÎ»ºó¼ÌÐøÐ´Èë£¬Ö±µ½´ý´«Êý¾ÝÈ«²¿Ð´ÈëFIFO£»						*/
+/*							3.¸ü¸ÄÔ­PZ_UART_GetReceived()¶ÁÈ¡Âß¼­£¬µ±DataLength´óÓÚFIFOÖÐ»º´æ		*/
+/*							×Ö·ûÊýÊ±£¬»á½«FIFOÖÐËùÓÐ»º´æ×Ö·û¶ÁÈ¡ºóÔÙÍË³ö¡£											*/
 /************************************************************************************/
 
 #ifndef __PZUART_H__
@@ -18,27 +25,19 @@
 #include<reg52.h>
 
 /**********************************************/
-/*									å‚æ•°è®¾å®š									*/
+/*									²ÎÊýÉè¶¨									*/
 /**********************************************/
-#define BAUD_RATE 9600																										//æ³¢ç‰¹çŽ‡
-#define FIFO_SIZE 32																											//FIFOå¤§å°
+#define BAUD_RATE 9600																										//²¨ÌØÂÊ
+#define FIFO_SIZE 32																											//FIFO´óÐ¡
 
 /**********************************************/
-/*								FIFOçŠ¶æ€è¡¨ç¤º								*/
+/*									º¯ÊýÉùÃ÷									*/
 /**********************************************/
-typedef enum{
-	FIFO_AVAILABLE = 0u,
-	FIFO_INAVAILABLE
-}FIFO_STATUS;
-
-/**********************************************/
-/*									å‡½æ•°å£°æ˜Ž									*/
-/**********************************************/
-/*	UARTåˆå§‹åŒ–	*/
+/*	UART³õÊ¼»¯	*/
 void PZ_UART_Init(void);
 
-/*	UARTå‘é€/æŽ¥æ”¶æ•°æ®ï¼ŒDataä¸ºæ•°æ®æŒ‡é’ˆï¼ŒDataLengthä¸ºæ•°æ®å­—èŠ‚æ•°	*/
-char PZ_UART_Send(unsigned char *Data, unsigned char DataLength);					//UARTå‘é€æ•°æ®ï¼Œè¿”å›žæ•°ä¸º1ä»£è¡¨FIFOç©ºé—´ä¸è¶³ï¼Œå¾…å‘é€æ•°æ®è¿‡å¤šï¼›è¿”å›žæ•°ä¸º0ä»£è¡¨æ•°æ®å­˜å…¥FIFOæˆåŠŸ
-char PZ_UART_GetReceived(unsigned char *Data, unsigned char DataLength);	//UARTèŽ·å–æ•°æ®ï¼Œè¿”å›žæ•°ä¸º1ä»£è¡¨FIFOæ•°æ®ä¸è¶³ï¼Œå·²æŽ¥æ”¶æ•°æ®è¿‡å°‘ï¼›è¿”å›žæ•°ä¸º0ä»£è¡¨æ•°æ®èŽ·å–æˆåŠŸ
+/*	UART·¢ËÍ/½ÓÊÕÊý¾Ý	*/
+void PZ_UART_Send(unsigned char *Data, unsigned char DataLength);					//UART·¢ËÍÊý¾Ý,DataÎªÊý¾ÝÖ¸Õë£¬DataLengthÎªÊý¾Ý×Ö½ÚÊý
+char PZ_UART_GetReceived(unsigned char *Data, unsigned char DataLength);	//UART»ñÈ¡Êý¾Ý£¬·µ»ØÊýÎª³É¹¦¶ÁÈ¡µ½µÄ×Ö·ûÊý;DataÎªÊý¾ÝÖ¸Õë£¬DataLengthÎª×î´ó½ÓÊÕÊý¾Ý×Ö½ÚÊý£¬DataLength = 0Ê±¶ÁÈ¡ËùÓÐÊý¡£
 
 #endif

@@ -1,27 +1,27 @@
 #include "PZ_UART.h"
-/*	å‘é€FIFOç›¸å…³	*/
+/*	·¢ËÍFIFOÏà¹Ø	*/
 unsigned char TRANSMIT_FIFO[FIFO_SIZE];
 unsigned char TRANSMIT_FIFO_POS;
 unsigned char TRANSMIT_FIFO_CNT;
 
-/* æŽ¥æ”¶FIFOç›¸å…³	*/
+/* ½ÓÊÕFIFOÏà¹Ø	*/
 unsigned char RECEIVE_FIFO[FIFO_SIZE];
 unsigned char RECEIVE_FIFO_POS;
 unsigned char RECEIVE_FIFO_CNT;
 
-/*	UARTåˆå§‹åŒ–*/
+/*	UART³õÊ¼»¯*/
 void PZ_UART_Init(void){
-	/*	FIFOåˆå§‹åŒ–	*/
+	/*	FIFO³õÊ¼»¯	*/
 	TRANSMIT_FIFO_POS = 0;
 	TRANSMIT_FIFO_CNT = 0;
 	RECEIVE_FIFO_POS = 0;
 	RECEIVE_FIFO_CNT = 0;
 	
-	/*	UARTä¸ŽTIMER1è®¾å®š	*/
+	/*	UARTÓëTIMER1Éè¶¨	*/
 	SCON = 0x50;
 	TMOD &= 0x0F;
 	TMOD |= 0x20;
-	switch(BAUD_RATE){				//æ³¢ç‰¹çŽ‡è®¾ç½®ï¼Œå¯è‡ªè¡Œæ·»åŠ 
+	switch(BAUD_RATE){				//²¨ÌØÂÊÉèÖÃ£¬¿É×ÔÐÐÌí¼Ó
 		case 9600:
 		default:
 			TH1 = TL1 = 0xFD;
@@ -50,28 +50,25 @@ void PZ_UART_Init(void){
 	EA = 1;
 }
 
-/*	å‘é€æ•°æ®(å­˜å…¥FIFOä¸­)	*/
-char PZ_UART_Send(unsigned char *Data, unsigned char DataLength){
+/*	·¢ËÍÊý¾Ý(´æÈëFIFOÖÐ)	*/
+void PZ_UART_Send(unsigned char *Data, unsigned char DataLength){
 	unsigned char i;
 	
-	if(TRANSMIT_FIFO_CNT+DataLength > FIFO_SIZE) return FIFO_INAVAILABLE;
 	for(i = 0; i < DataLength; i++){
+		while(TRANSMIT_FIFO_CNT >= FIFO_SIZE);																					//µ±FIFOÂúÊ±µÈ´ý
 		TRANSMIT_FIFO[(TRANSMIT_FIFO_POS+TRANSMIT_FIFO_CNT)%FIFO_SIZE] = *(Data+i);
 		TRANSMIT_FIFO_CNT ++;
 		if(TRANSMIT_FIFO_CNT <= 1){
 			SBUF = TRANSMIT_FIFO[TRANSMIT_FIFO_POS];
 		}
 	}
-	
-	return FIFO_AVAILABLE;
 }
 
-/*	æŽ¥æ”¶æ•°æ®(ä»ŽFIFOè¯»å–)	*/
+/*	½ÓÊÕÊý¾Ý(´ÓFIFO¶ÁÈ¡)	*/
 char PZ_UART_GetReceived(unsigned char *Data, unsigned char DataLength){
 	unsigned char i;
 	
-	if(DataLength > RECEIVE_FIFO_CNT) return FIFO_INAVAILABLE;
-	for(i = 0; i < DataLength; i++){
+	for(i = 0; (i <= DataLength || DataLength == 0) && RECEIVE_FIFO_CNT > 0; i++){		//µ±¶ÁÈ¡×Ö·ûÊýµ½´ïDataLength»òFIFO±»¶Á¿ÕºóÍË³öÑ­»·
 		if(RECEIVE_FIFO_CNT){
 			*(Data+i) = RECEIVE_FIFO[RECEIVE_FIFO_POS];
 			RECEIVE_FIFO_POS = (RECEIVE_FIFO_POS+1)%FIFO_SIZE;
@@ -79,10 +76,10 @@ char PZ_UART_GetReceived(unsigned char *Data, unsigned char DataLength){
 		}
 	}
 	
-	return FIFO_AVAILABLE;
+	return i;
 }
 
-/*	ä¸­æ–­å‡½æ•°	*/
+/*	ÖÐ¶Ïº¯Êý	*/
 void PZ_UART_SendInterrupt(void) interrupt 4{
 	if(TI == 1){
 		TRANSMIT_FIFO_POS = (TRANSMIT_FIFO_POS+1)%FIFO_SIZE;
