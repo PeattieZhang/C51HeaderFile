@@ -1,27 +1,27 @@
 #include "PZ_UART.h"
-/*	·¢ËÍFIFOÏà¹Ø	*/
+/*	å‘é€FIFOç›¸å…³	*/
 unsigned char TRANSMIT_FIFO[FIFO_SIZE];
 unsigned char TRANSMIT_FIFO_POS;
 unsigned char TRANSMIT_FIFO_CNT;
 
-/* ½ÓÊÕFIFOÏà¹Ø	*/
+/* æ¥æ”¶FIFOç›¸å…³	*/
 unsigned char RECEIVE_FIFO[FIFO_SIZE];
 unsigned char RECEIVE_FIFO_POS;
 unsigned char RECEIVE_FIFO_CNT;
 
-/*	UART³õÊ¼»¯*/
+/*	UARTåˆå§‹åŒ–*/
 void PZ_UART_Init(void){
-	/*	FIFO³õÊ¼»¯	*/
+	/*	FIFOåˆå§‹åŒ–	*/
 	TRANSMIT_FIFO_POS = 0;
 	TRANSMIT_FIFO_CNT = 0;
 	RECEIVE_FIFO_POS = 0;
 	RECEIVE_FIFO_CNT = 0;
 	
-	/*	UARTÓëTIMER1Éè¶¨	*/
+	/*	UARTä¸TIMER1è®¾å®š	*/
 	SCON = 0x50;
 	TMOD &= 0x0F;
 	TMOD |= 0x20;
-	switch(BAUD_RATE){				//²¨ÌØÂÊÉèÖÃ£¬¿É×ÔĞĞÌí¼Ó
+	switch(BAUD_RATE){				//æ³¢ç‰¹ç‡è®¾ç½®ï¼Œå¯è‡ªè¡Œæ·»åŠ 
 		case 9600:
 		default:
 			TH1 = TL1 = 0xFD;
@@ -50,7 +50,7 @@ void PZ_UART_Init(void){
 	EA = 1;
 }
 
-/*	·¢ËÍÊı¾İ(´æÈëFIFOÖĞ)	*/
+/*	å‘é€æ•°æ®(å­˜å…¥FIFOä¸­)	*/
 char PZ_UART_Send(unsigned char *Data, unsigned char DataLength){
 	unsigned char i;
 	
@@ -66,7 +66,7 @@ char PZ_UART_Send(unsigned char *Data, unsigned char DataLength){
 	return FIFO_AVAILABLE;
 }
 
-/*	½ÓÊÕÊı¾İ(´ÓFIFO¶ÁÈ¡)	*/
+/*	æ¥æ”¶æ•°æ®(ä»FIFOè¯»å–)	*/
 char PZ_UART_GetReceived(unsigned char *Data, unsigned char DataLength){
 	unsigned char i;
 	
@@ -82,7 +82,7 @@ char PZ_UART_GetReceived(unsigned char *Data, unsigned char DataLength){
 	return FIFO_AVAILABLE;
 }
 
-/*	ÖĞ¶Ïº¯Êı	*/
+/*	ä¸­æ–­å‡½æ•°	*/
 void PZ_UART_SendInterrupt(void) interrupt 4{
 	if(TI == 1){
 		TRANSMIT_FIFO_POS = (TRANSMIT_FIFO_POS+1)%FIFO_SIZE;
